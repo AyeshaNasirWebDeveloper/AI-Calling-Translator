@@ -39,13 +39,26 @@ const CallView = () => {
         setCallState('calling');
         toast.loading('Requesting permissions...');
 
+        let stream: MediaStream;
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
             myStreamRef.current = stream;
             setupWaveform(stream);
             toast.dismiss();
-            toast.loading('Connecting to server...');
+        } catch (err) {
+            toast.dismiss();
+            if (err instanceof Error && (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError')) {
+                toast.error('Microphone permission denied. Please allow access in your browser settings.');
+            } else {
+                toast.error('Could not access microphone. Is it connected?');
+                console.error("getUserMedia error:", err);
+            }
+            setCallState('idle');
+            return;
+        }
 
+        toast.loading('Connecting to server...');
+        try {
             const socket = await connectSocket();
             socketRef.current = socket;
             
@@ -58,8 +71,8 @@ const CallView = () => {
 
         } catch (error) {
             toast.dismiss();
-            toast.error('Could not start call. Check permissions and server connection.');
-            console.error("Error starting call:", error);
+            toast.error('Failed to connect to the server. Is it running?');
+            console.error("WebSocket connection error:", error);
             setCallState('idle');
         }
     };
