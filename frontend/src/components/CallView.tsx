@@ -176,7 +176,7 @@ const CallView = () => {
     };
 
     const setupWaveform = (stream: MediaStream) => {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const audioContext = new AudioContext();
         const analyser = audioContext.createAnalyser();
         const source = audioContext.createMediaStreamSource(stream);
         source.connect(analyser);
